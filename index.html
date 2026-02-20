@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniFit Pro | Smart Campus Diet AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .screen { transition: opacity 0.3s ease; }
+        
+        /* Chat Animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .chat-window { animation: slideUp 0.3s ease-out; }
+        
+        /* Float Animation for Button */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        .pulse-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: #3b82f6;
+            animation: pulse-ring 1.5s infinite;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex justify-center items-center p-4">
+
+    <div class="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden md:flex min-h-[750px] relative">
+        
+        <!-- LEFT SIDE: BRANDING -->
+        <div class="hidden md:flex w-2/5 bg-gradient-to-br from-blue-700 to-indigo-900 p-10 flex-col justify-between relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-72 h-72 bg-blue-500 rounded-full filter blur-3xl opacity-20 translate-x-20 -translate-y-20"></div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center space-x-3 mb-12">
+                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="text-blue-600 font-bold text-xl">U</span>
+                    </div>
+                    <span class="text-white font-bold text-xl tracking-wide">UniFit Pro</span>
+                </div>
+                
+                <h1 class="text-4xl font-extrabold text-white leading-tight mb-4">
+                    Transform Your<br>
+                    <span class="text-blue-200">Campus Diet.</span>
+                </h1>
+            </div>
+
+            <div class="relative z-10 flex justify-center my-8">
+                <div class="relative w-48 h-48 flex items-center justify-center">
+                    <div class="absolute inset-0 bg-blue-500 rounded-full filter blur-xl opacity-30"></div>
+                    <div class="relative text-8xl">🏋️</div>
+                </div>
+            </div>
+
+            <div class="relative z-10 space-y-3">
+                <div class="flex items-center space-x-3 bg-white/10 p-3 rounded-xl border border-white/10">
+                    <div class="text-xl">📊</div>
+                    <div>
+                        <div class="text-white font-semibold text-sm">Gap Analysis</div>
+                        <div class="text-blue-200 text-xs">Detects nutrient deficiencies.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE: MAIN APP -->
+        <div class="w-full md:w-3/5 p-8 md:p-12 relative overflow-y-auto h-[750px]">
+            
+            <!-- Screen 1: Profile -->
+            <div id="s1" class="screen">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-slate-800">Let's Set You Up! 🚀</h2>
+                    <p class="text-slate-500 mt-2">Enter your stats.</p>
+                </div>
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Your Name</label>
+                        <input type="text" id="userName" placeholder="e.g., Arjun" class="mt-2 w-full px-4 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Age</label>
+                            <input type="number" id="age" placeholder="20" class="mt-2 w-full px-4 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Gender</label>
+                            <select id="gender" class="mt-2 w-full px-4 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Weight (kg)</label>
+                            <input type="number" id="weight" placeholder="70" class="mt-2 w-full px-4 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-bold text-slate-400 uppercase">Height</label>
+                                <div class="flex items-center space-x-1 bg-slate-100 rounded-lg p-0.5">
+                                    <button onclick="setHeightMode('cm')" id="btn-cm" class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 font-semibold transition">CM</button>
+                                    <button onclick="setHeightMode('ft')" id="btn-ft" class="text-xs px-2 py-1 rounded text-slate-500 transition">Ft</button>
+                                </div>
+                            </div>
+                            <div id="input-cm" class="mt-2"><input type="number" id="heightCM" placeholder="175" class="w-full px-4 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"></div>
+                            <div id="input-ft" class="mt-2 hidden flex space-x-2">
+                                <input type="number" id="heightFt" placeholder="5" class="w-1/2 px-3 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                                <input type="number" id="heightIn" placeholder="9" class="w-1/2 px-3 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Primary Goal</label>
+                        <select id="goal" class="mt-2 w-full px-4 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                            <option value="loss">🔥 Fat Loss</option>
+                            <option value="maintain">💪 Stay Fit</option>
+                            <option value="gain">🏋️ Muscle Gain</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Diet Preference</label>
+                        <select id="dietType" class="mt-2 w-full px-4 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                            <option value="veg">🥦 Vegetarian</option>
+                            <option value="non-veg">🍗 Non-Vegetarian</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="calculateGoals()" class="w-full mt-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-0.5">
+                    Calculate My Calories →
+                </button>
+            </div>
+
+            <!-- Screen 2: Goals -->
+            <div id="s2" class="screen hidden">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-slate-800">Your Daily Target</h2>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-5 rounded-2xl text-white shadow-lg">
+                        <div class="text-xs uppercase opacity-80 font-bold">Calories</div>
+                        <div class="text-4xl font-bold mt-1" id="res-cal-target">0</div>
+                    </div>
+                    <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm">
+                        <div class="text-xs uppercase text-slate-400 font-bold">Protein</div>
+                        <div class="text-4xl font-bold text-slate-800 mt-1" id="res-pro-target">0g</div>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl text-blue-800 text-sm mb-6">
+                    <span class="font-bold">💡 Next Step:</span> Upload your hostel menu file (Excel, PDF, or Image).
+                </div>
+                <button onclick="goToStep(3)" class="w-full py-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl transition">
+                    Upload My Menu 📂
+                </button>
+            </div>
+
+            <!-- Screen 3: Upload -->
+            <div id="s3" class="screen hidden">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-slate-800">Upload Menu</h2>
+                </div>
+                <label class="upload-zone block w-full p-10 rounded-2xl cursor-pointer bg-slate-50 text-center border-2 border-dashed border-slate-200 hover:border-blue-400 transition">
+                    <input type="file" id="fileInput" class="hidden" onchange="handleFile(event)">
+                    <div class="mb-3"><div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-3">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                    </div></div>
+                    <p class="font-semibold text-slate-700">Drop ANY file here</p>
+                    <p class="text-xs text-slate-400 mt-1">Excel, PDF, JPG, PNG etc.</p>
+                </label>
+                <div id="status-box" class="hidden mt-4 p-4 bg-slate-50 rounded-xl">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span id="status-text" class="text-slate-600 text-sm">Reading...</span>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <label class="text-xs font-bold text-slate-400 uppercase">Select Day</label>
+                    <select id="daySelect" disabled class="mt-2 w-full px-4 py-3.5 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition disabled:opacity-50">
+                        <option>Waiting for upload...</option>
+                    </select>
+                </div>
+                <button onclick="goToStep(2)" class="w-full mt-4 py-3 text-slate-400 font-medium text-sm">← Back</button>
+                <button id="generateBtn" onclick="analyzePlan()" disabled class="w-full mt-2 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-semibold rounded-xl shadow-lg transition">
+                    Analyze Diet Plan 🧠
+                </button>
+            </div>
+
+            <!-- Screen 4: Results -->
+            <div id="s4" class="screen hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Analysis Complete ✅</h2>
+                    <p class="text-slate-500 text-sm" id="res-date">Date</p>
+                </div>
+                <div id="gap-alert" class="p-5 rounded-2xl mb-6 bg-red-50 border border-red-100 hidden">
+                    <div class="flex items-start space-x-3">
+                        <div class="text-2xl">⚠️</div>
+                        <div>
+                            <h3 class="font-bold text-red-800">Diet Gap Detected!</h3>
+                            <p class="text-red-700 text-sm mt-1" id="gap-text">Info</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-b border-slate-100 pb-4 mb-4">
+                    <h3 class="font-semibold text-slate-800 text-lg">Mess Menu Plan 🍽️</h3>
+                </div>
+                <div id="mealsContainer" class="space-y-3 max-h-64 overflow-y-auto pr-2"></div>
+                <div class="mt-6 border-t border-slate-100 pt-4">
+                    <h3 class="font-semibold text-slate-800 text-lg mb-3">Smart Suggestions 💡</h3>
+                    <div id="suggestions-box" class="bg-green-50 p-4 rounded-xl border border-green-100">
+                        <div class="text-green-800 text-sm" id="suggestions-text">Calculating...</div>
+                    </div>
+                </div>
+                <div class="mt-8 space-y-3">
+                    <button onclick="downloadPDF()" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg">Download Report 📥</button>
+                    <button onclick="goToStep(3)" class="w-full py-3 text-slate-500 font-medium text-sm hover:text-slate-700 transition">Check Another Day</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CHAT ASSISTANT BUTTON & WINDOW -->
+    <div id="chat-container" class="fixed bottom-6 right-6 z-50">
+        
+        <!-- Chat Window (Hidden by default) -->
+        <div id="chat-window" class="hidden chat-window absolute bottom-20 right-0 w-80 h-96 bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+            <div class="bg-blue-600 p-4 text-white">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 font-bold">AI</div>
+                    <div>
+                        <div class="font-bold text-sm">Trainer Bot</div>
+                        <div class="text-xs opacity-75">International Fitness Pro</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
+                <div class="flex justify-start">
+                    <div class="bg-white p-3 rounded-xl text-sm shadow-sm text-slate-700 max-w-[80%]">
+                        👋 Hey! I'm your AI Trainer. Ask me anything about diet, gym, or your meal plan!
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-3 border-t border-slate-100 bg-white">
+                <div class="flex space-x-2">
+                    <input type="text" id="chat-input" placeholder="Ask about diet..." class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.key==='Enter')sendChat()">
+                    <button onclick="sendChat()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Button -->
+        <button onclick="toggleChat()" class="relative pulse-btn w-16 h-16 bg-blue-600 rounded-full shadow-lg flex items-center justify-center text-white hover:bg-blue-700 transition transform hover:scale-105 focus:outline-none">
+            <svg id="chat-icon-open" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+            <svg id="chat-icon-close" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+    </div>
+
+<script>
+    // --- Core App Logic ---
+    let USER = { goals: {} };
+    let PARSED_MENU = [];
+    let CURRENT_PLAN = {};
+    let heightMode = 'cm';
+
+    function goToStep(step) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.getElementById('s'+step).classList.remove('hidden');
+        window.scrollTo(0,0);
+    }
+
+    function setHeightMode(mode) {
+        heightMode = mode;
+        const btnCm = document.getElementById('btn-cm');
+        const btnFt = document.getElementById('btn-ft');
+        if (mode === 'cm') {
+            btnCm.className = 'text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 font-semibold transition';
+            btnFt.className = 'text-xs px-2 py-1 rounded text-slate-500 transition';
+        } else {
+            btnFt.className = 'text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 font-semibold transition';
+            btnCm.className = 'text-xs px-2 py-1 rounded text-slate-500 transition';
+        }
+        document.getElementById('input-cm').classList.toggle('hidden', mode !== 'cm');
+        document.getElementById('input-ft').classList.toggle('hidden', mode !== 'ft');
+    }
+
+    function calculateGoals() {
+        const w = parseFloat(document.getElementById('weight').value);
+        let h = 0;
+        if (heightMode === 'cm') h = parseFloat(document.getElementById('heightCM').value);
+        else {
+            const ft = parseFloat(document.getElementById('heightFt').value) || 0;
+            const inch = parseFloat(document.getElementById('heightIn').value) || 0;
+            h = (ft * 30.48) + (inch * 2.54);
+        }
+        const a = parseFloat(document.getElementById('age').value);
+        const gender = document.getElementById('gender').value;
+        const goal = document.getElementById('goal').value;
+
+        if (!w || !h || !a) { alert("Please fill all fields!"); return; }
+
+        USER.name = document.getElementById('userName').value || "User";
+        USER.goalType = goal;
+        USER.diet = document.getElementById('dietType').value;
+
+        let bmr = (gender === 'male') ? (10*w)+(6.25*h)-(5*a)+5 : (10*w)+(6.25*h)-(5*a)-161;
+        let tdee = bmr * 1.55;
+        if(goal === 'loss') tdee -= 500;
+        if(goal === 'gain') tdee += 300;
+
+        USER.goals.calories = Math.round(tdee);
+        USER.goals.protein = Math.round( (goal === 'gain' ? w * 2.2 : w * 1.6) );
+        USER.goals.carbs = Math.round( (tdee * 0.5) / 4 );
+        USER.goals.fats = Math.round( (tdee * 0.25) / 9 );
+
+        document.getElementById('res-cal-target').innerText = USER.goals.calories;
+        document.getElementById('res-pro-target').innerText = USER.goals.protein + "g";
+        document.getElementById('res-carb-target').innerText = USER.goals.carbs + "g";
+        document.getElementById('res-fat-target').innerText = USER.goals.fats + "g";
+
+        goToStep(2);
+    }
+
+    async function handleFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const fileName = file.name.toLowerCase();
+        const statusBox = document.getElementById('status-box');
+        const statusText = document.getElementById('status-text');
+        statusBox.classList.remove('hidden');
+        statusText.innerText = "Reading file: " + file.name;
+
+        try {
+            if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                await processExcel(file);
+            } else if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
+                await processText(file);
+            } else if (fileName.endsWith('.pdf') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
+                statusText.innerText = "AI Vision Scanning...";
+                await processImageOrPdf(file);
+            } else {
+                await processText(file); // Try as text for anything else
+            }
+            statusBox.classList.add('hidden');
+        } catch (err) {
+            console.error(err);
+            alert("Could not read file.");
+            statusBox.classList.add('hidden');
+        }
+    }
+
+    async function processExcel(file) {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        parseMenuLogic(json);
+    }
+
+    async function processText(file) {
+        const text = await file.text();
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+        PARSED_MENU = [{ date: "Uploaded List", meals: { Breakfast: lines.slice(0, 4), Lunch: lines.slice(4, 10), Dinner: lines.slice(10) } }];
+        populateDates();
+    }
+
+    async function processImageOrPdf(file) {
+        const statusText = document.getElementById('status-text');
+        const result = await Tesseract.recognize(file, 'eng', {
+            logger: m => { if(m.status === 'recognizing text') statusText.innerText = `AI Vision: ${Math.round(m.progress*100)}%`; }
+        });
+        const lines = result.data.text.split('\n').map(l => l.trim()).filter(l => l);
+        PARSED_MENU = [{ date: "Scanned Document", meals: { Breakfast: lines.slice(0, 5), Lunch: lines.slice(5, 12), Dinner: lines.slice(12) } }];
+        populateDates();
+    }
+
+    function parseMenuLogic(rows) {
+        PARSED_MENU = [];
+        let dateRow = null;
+        for(let r = 0; r < 5; r++) {
+            if(!rows[r]) continue;
+            if(rows[r].some(c => String(c).match(/^\d{4}\/\d{1,2}\/\d{1,2}$/))) { dateRow = rows[r]; break; }
+        }
+        if (!dateRow) { /* Fallback logic */ return; }
+        
+        let datesFound = [];
+        dateRow.forEach((val, idx) => { if(String(val).match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) datesFound.push({ date: val, colIdx: idx }); });
+
+        datesFound.forEach(d => {
+            let dayPlan = { date: d.date, meals: { Breakfast: [], Lunch: [], Dinner: [] } };
+            for(let r = 2; r < rows.length; r++) {
+                let row = rows[r];
+                if (!row || !row[d.colIdx]) continue;
+                let item = String(row[d.colIdx]).trim();
+                let category = String(row[1] || "").trim();
+                if (item.length < 2) continue;
+                let section = "Lunch";
+                if (category.toUpperCase().includes("BREAKFAST")) section = "Breakfast";
+                if (category.toUpperCase().includes("DINNER")) section = "Dinner";
+                dayPlan.meals[section].push(item);
+            }
+            PARSED_MENU.push(dayPlan);
+        });
+        populateDates();
+    }
+
+    function populateDates() {
+        const select = document.getElementById('daySelect');
+        select.innerHTML = '';
+        PARSED_MENU.forEach((d, i) => {
+            let opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = d.date;
+            select.appendChild(opt);
+        });
+        select.disabled = false;
+        document.getElementById('generateBtn').disabled = false;
+    }
+
+    // --- Diet Logic ---
+    const DB = {
+        "Bread / Jam & Butter": { p: 3, c: 25, f: 5, cal: 150 },
+        "Boiled Egg": { p: 6, c: 1, f: 5, cal: 70 },
+        "Chapathi": { p: 3, c: 15, f: 2, cal: 90 },
+        "Steamed Rice": { p: 4, c: 50, f: 0, cal: 220 },
+        "Default Veg": { p: 4, c: 20, f: 8, cal: 160 },
+        "Default NonVeg": { p: 20, c: 10, f: 15, cal: 260 }
+    };
+    function getMacro(item) {
+        if (DB[item]) return DB[item];
+        if (item.toLowerCase().includes('chicken')) return DB["Default NonVeg"];
+        return DB["Default Veg"];
+    }
+
+    function analyzePlan() {
+        const idx = document.getElementById('daySelect').value;
+        const dayData = PARSED_MENU[idx];
+        let totals = { cal: 0, p: 0, c: 0, f: 0 };
+        let plan = { Breakfast: [], Lunch: [], Dinner: [] };
+
+        function addItem(meal, item) {
+            if(USER.diet === 'veg' && (item.toLowerCase().includes('chicken') || item.toLowerCase().includes('egg'))) return;
+            let m = getMacro(item);
+            totals.cal += m.cal; totals.p += m.p; totals.c += m.c; totals.f += m.f;
+            plan[meal].push({ name: item, ...m });
+        }
+
+        dayData.meals.Breakfast.forEach(i => addItem("Breakfast", i));
+        dayData.meals.Lunch.forEach(i => addItem("Lunch", i));
+        dayData.meals.Dinner.forEach(i => addItem("Dinner", i));
+        CURRENT_PLAN = plan;
+        
+        let gapCal = USER.goals.calories - totals.cal;
+        let gapPro = USER.goals.protein - totals.p;
+        renderResults(dayData.date, totals, gapCal, gapPro);
+    }
+
+    function renderResults(date, totals, gapCal, gapPro) {
+        goToStep(4);
+        document.getElementById('res-date').innerText = "Menu for: " + date;
+        if (gapPro > 20 || gapCal > 300) {
+            document.getElementById('gap-alert').classList.remove('hidden');
+            document.getElementById('gap-text').innerText = `You are short by ${gapPro}g Protein and ${gapCal} Calories.`;
+        } else { document.getElementById('gap-alert').classList.add('hidden'); }
+
+        let html = '';
+        for(let m in CURRENT_PLAN) {
+            if(CURRENT_PLAN[m].length === 0) continue;
+            html += `<div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                <div class="flex justify-between text-xs font-bold text-slate-400 uppercase mb-2"><span>${m}</span></div>
+                ${CURRENT_PLAN[m].map(i => `<div class="flex justify-between text-sm py-1"><span class="text-slate-700">${i.name}</span><span class="text-slate-500">${i.cal} cal</span></div>`).join('')}
+            </div>`;
+        }
+        document.getElementById('mealsContainer').innerHTML = html;
+
+        if (gapPro > 20) {
+            let eggs = Math.ceil(gapPro / 6);
+            document.getElementById('suggestions-text').innerHTML = `⚠️ Protein Deficit! Buy <b>${eggs} Boiled Eggs</b> from the cafe.`;
+        } else {
+            document.getElementById('suggestions-text').innerText = "✅ Your mess diet is well balanced!";
+        }
+    }
+
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("UniFit Diet Report", 20, 20);
+        doc.save("UniFit_Plan.pdf");
+    }
+
+    // --- CHAT ASSISTANT LOGIC ---
+    
+    function toggleChat() {
+        const win = document.getElementById('chat-window');
+        const open = document.getElementById('chat-icon-open');
+        const close = document.getElementById('chat-icon-close');
+        win.classList.toggle('hidden');
+        open.classList.toggle('hidden');
+        close.classList.toggle('hidden');
+    }
+
+    function sendChat() {
+        const input = document.getElementById('chat-input');
+        const msg = input.value.trim();
+        if(!msg) return;
+
+        addChatMessage(msg, 'user');
+        input.value = '';
+
+        // Simulate "Thinking"
+        setTimeout(() => {
+            const response = getAIResponse(msg);
+            addChatMessage(response, 'bot');
+        }, 600);
+    }
+
+    function addChatMessage(text, sender) {
+        const container = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = `p-3 rounded-xl text-sm shadow-sm max-w-[80%] ${sender === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`;
+        bubble.innerText = text;
+        
+        div.appendChild(bubble);
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function getAIResponse(q) {
+        q = q.toLowerCase();
+        
+        // Knowledge Base
+        if (q.includes("protein")) return "💪 For muscle gain, aim for 1.6g to 2.2g of protein per kg of body weight. Good hostel sources: Eggs, Milk, Lentils, and Chicken.";
+        if (q.includes("lose") || q.includes("fat") || q.includes("weight loss")) return "🏃 To lose weight, you need a calorie deficit. Reduce rice intake and avoid fried snacks. Focus on high fiber foods.";
+        if (q.includes("supplement") || q.includes("whey")) return "💊 Supplements are useful if you can't hit protein goals. Whey is safe. Creatine (5g daily) is great for strength.";
+        if (q.includes("pre workout") || q.includes("energy")) return "⚡ Black coffee or a banana 30 mins before the gym is a great natural pre-workout!";
+        if (q.includes("vegetarian") || q.includes("veg")) return "🥦 Vegetarians can build muscle! Focus on Paneer, Tofu, Chickpeas, and Mix Dal.";
+        if (q.includes("hello") || q.includes("hi")) return "Hello! 👋 I'm your AI Trainer. I can help with diet plans, macro calculations, or gym tips.";
+        
+        return "That's a great question. As a trainer, I recommend consistency over intensity. Stick to your calculated macros, train hard, and sleep 7-8 hours. Results will follow! 🏆";
+    }
+
+</script>
+</body>
+</html>
